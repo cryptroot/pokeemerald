@@ -7,6 +7,24 @@ In general, you should not need to open these unless if you get an error or if y
 
 If you run into trouble, ask for help on Discord or IRC (see [README.md](README.md)).
 
+## Building with Docker
+
+The build is split into two images so that the slow toolchain setup is only redone when it changes.
+
+1. Build the prerequisite image (system packages and agbcc). Rebuild only when the toolchain changes:
+
+    ```bash
+    docker build -f docker/Dockerfile.toolchain -t pokeemerald-toolchain:latest .
+    ```
+
+2. Build the ROM from the sources. This copies `pokeemerald.gba` into the current directory:
+
+    ```bash
+    docker build -f docker/Dockerfile.build \
+      --build-arg TOOLCHAIN_IMAGE=pokeemerald-toolchain:latest \
+      --target artifact --output type=local,dest=. .
+    ```
+
 ## Windows
 Windows has instructions for building with three possible terminals, providing 3 different options in case the user stumbles upon unexpected errors.
 - [Windows 10/11 (WSL1)](#windows-1011-wsl1) (**Fastest, highly recommended**, Windows 10 and 11 only)

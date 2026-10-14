@@ -1,0 +1,25 @@
+# Prerequisite image for building pokeemerald.
+# Contains the system packages and a built agbcc at /opt/agbcc.
+# Rebuild only when the toolchain changes; see Dockerfile.build for the ROM build.
+#
+#   docker build -f docker/Dockerfile.toolchain -t pokeemerald-toolchain:latest .
+
+FROM debian:bookworm-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        binutils-arm-none-eabi \
+        git \
+        libpng-dev \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN git clone --depth 1 https://github.com/pret/agbcc /opt/agbcc \
+    && cd /opt/agbcc \
+    && ./build.sh \
+    && rm -rf /opt/agbcc/.git
+
+WORKDIR /src

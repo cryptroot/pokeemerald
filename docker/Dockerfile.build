@@ -1,0 +1,23 @@
+# Builds pokeemerald.gba using the prerequisite image from Dockerfile.toolchain.
+# Run from the repository root so the build context includes the sources:
+#
+#   docker build -f docker/Dockerfile.build \
+#     --build-arg TOOLCHAIN_IMAGE=pokeemerald-toolchain:latest \
+#     --target artifact --output type=local,dest=. .
+#
+# The artifact stage only contains pokeemerald.gba, so --output copies just the ROM.
+
+ARG TOOLCHAIN_IMAGE=pokeemerald-toolchain:latest
+FROM ${TOOLCHAIN_IMAGE} AS build
+
+WORKDIR /src/pokeemerald
+COPY . .
+
+# Build outputs are kept in a cache mount so incremental rebuilds stay fast.
+RUN --mount=type=cache,target=/src/pokeemerald/build,sharing=locked \
+    (cd /opt/agbcc && ./install.sh /src/pokeemerald) \
+    && make -j"$(nproc)" \
+    && sha1sum -c rom.sha1
+
+FROM scratch AS artifact
+COPY --from=build /src/pokeemerald/pokeemerald.gba /pokeemerald.gba
